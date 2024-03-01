@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Leet2Git (LeetCode to GitHub)",
+  "version": "1.0",
+  "description": "Automatically pushes LeetCode submissions to a GitHub repository.",
+  "permissions": ["activeTab", "storage", "https://leetcode.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/Leet2Git_16.png",
+      "48": "images/Leet2Git_48.png",
+      "128": "images/Leet2Git_128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://leetcode.com/*"],
+      "js": ["content-script.js"]
+    }
+  ],
+  "icons": {
+    "16": "images/Leet2Git_16.png",
+    "48": "images/Leet2Git_48.png",
+    "128": "images/Leet2Git_128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+  }
+}
