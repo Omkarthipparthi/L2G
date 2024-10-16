@@ -1,0 +1,13 @@
+
+<h2>GitHub Settings</h2>
+    <form (ngSubmit)="saveSettings()">
+      <label>
+        Repository:
+        <input [(ngModel)]="repository" name="repository" required>
+      </label>
+      <label>
+        Personal Access Token:
+        <input [(ngModel)]="token" name="token" type="password" required>
+      </label>
+      <button type="submit">Save</button>
+</form>

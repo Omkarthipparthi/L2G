@@ -1,6 +1,13 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { appConfig } from './app/app.config';
-import { AppComponent } from './app/app.component';
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { PopupComponent } from './app/popup/popup.component';
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { bootstrapApplication, BrowserModule } from '@angular/platform-browser';
 
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
+const appConfig: ApplicationConfig = {
+  providers: [
+    importProvidersFrom(BrowserModule)
+  ]
+};
+
+bootstrapApplication(PopupComponent, appConfig)
+  .catch(err => console.error(err));

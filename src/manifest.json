@@ -3,7 +3,7 @@
   "name": "Leet2Git (LeetCode to GitHub)",
   "version": "1.0",
   "description": "Automatically pushes LeetCode submissions to a GitHub repository.",
-  "permissions": ["activeTab", "storage", "https://leetcode.com/*"],
+  "permissions": ["activeTab", "storage"],
   "background": {
     "service_worker": "background.js"
   },
