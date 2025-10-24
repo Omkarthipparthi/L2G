@@ -138,12 +138,27 @@ async function processSubmission() {
  */
 async function sendSubmissionToBackground(submission: Submission) {
   try {
+    // Check if extension context is valid
+    if (!chrome.runtime?.id) {
+      console.error('Extension context invalidated - try reloading the page');
+      showNotification('❌ Extension context lost. Please reload the page.', 'error');
+      return;
+    }
+
     const message: Message = {
       type: 'SUBMISSION_DETECTED',
       payload: submission,
     };
 
+    console.log('Sending message to background worker...');
     const response = await chrome.runtime.sendMessage(message);
+    console.log('Response received:', response);
+
+    if (!response) {
+      console.error('No response from background worker');
+      showNotification('❌ Background worker not responding. Try reloading extension.', 'error');
+      return;
+    }
 
     if (response.success) {
       console.log('✅ Submission sent successfully:', response);
@@ -159,9 +174,17 @@ async function sendSubmissionToBackground(submission: Submission) {
       console.error('Failed to sync:', response.error);
       showNotification(`❌ Failed to sync: ${response.error}`, 'error');
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to send submission:', error);
-    showNotification('❌ Failed to communicate with extension', 'error');
+    
+    // More specific error messages
+    if (error.message?.includes('Extension context invalidated')) {
+      showNotification('❌ Extension reloaded. Please refresh this page.', 'error');
+    } else if (error.message?.includes('Could not establish connection')) {
+      showNotification('❌ Background worker not running. Check extension.', 'error');
+    } else {
+      showNotification('❌ Failed to communicate with extension', 'error');
+    }
   }
 }
 
@@ -285,4 +308,18 @@ new MutationObserver(() => {
     init();
   }
 }).observe(document, { subtree: true, childList: true });
+
+// Listen for extension reload/update
+chrome.runtime.onMessage.addListener((_message, _sender, _sendResponse) => {
+  // Keep listener alive
+  return true;
+});
+
+// Periodic check to detect if extension context is still valid
+setInterval(() => {
+  if (!chrome.runtime?.id) {
+    console.warn('⚠️ Extension context invalidated - page reload required');
+    showNotification('⚠️ Extension updated. Please refresh this page!', 'info');
+  }
+}, 30000); // Check every 30 seconds
 

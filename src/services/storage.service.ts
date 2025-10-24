@@ -3,15 +3,20 @@ import { Submission } from '../types/problem.types';
 
 /**
  * Service for managing Chrome storage
- * Uses chrome.storage.sync for cross-device synchronization
+ * Uses chrome.storage.sync for small settings (cross-device sync)
+ * Uses chrome.storage.local for large data (submissions, history)
  */
 export class StorageService {
+  // Keys that should use local storage (large data)
+  private static LOCAL_STORAGE_KEYS: Set<keyof StorageData> = new Set(['submissions', 'syncHistory']);
+
   /**
-   * Get a value from storage
+   * Get a value from storage (auto-selects sync or local)
    */
   static async get<K extends keyof StorageData>(key: K): Promise<StorageData[K] | undefined> {
     try {
-      const result = await chrome.storage.sync.get(key);
+      const storage = this.LOCAL_STORAGE_KEYS.has(key) ? chrome.storage.local : chrome.storage.sync;
+      const result = await storage.get(key);
       return result[key];
     } catch (error) {
       console.error(`Failed to get ${key} from storage:`, error);
@@ -20,11 +25,12 @@ export class StorageService {
   }
 
   /**
-   * Set a value in storage
+   * Set a value in storage (auto-selects sync or local)
    */
   static async set<K extends keyof StorageData>(key: K, value: StorageData[K]): Promise<void> {
     try {
-      await chrome.storage.sync.set({ [key]: value });
+      const storage = this.LOCAL_STORAGE_KEYS.has(key) ? chrome.storage.local : chrome.storage.sync;
+      await storage.set({ [key]: value });
     } catch (error) {
       console.error(`Failed to set ${key} in storage:`, error);
       throw error;
@@ -123,11 +129,12 @@ export class StorageService {
   }
 
   /**
-   * Clear all storage data
+   * Clear all storage data (both sync and local)
    */
   static async clear(): Promise<void> {
     try {
       await chrome.storage.sync.clear();
+      await chrome.storage.local.clear();
     } catch (error) {
       console.error('Failed to clear storage:', error);
       throw error;
@@ -139,12 +146,16 @@ export class StorageService {
    */
   static async getStorageInfo(): Promise<{ bytesInUse: number; quota: number }> {
     try {
-      const bytesInUse = await chrome.storage.sync.getBytesInUse();
-      // Chrome sync storage quota is 102,400 bytes
-      return { bytesInUse, quota: 102400 };
+      const syncBytes = await chrome.storage.sync.getBytesInUse();
+      const localBytes = await chrome.storage.local.getBytesInUse();
+      // Chrome local storage quota is typically 10MB (10,485,760 bytes)
+      return { 
+        bytesInUse: localBytes + syncBytes, 
+        quota: 10485760 
+      };
     } catch (error) {
       console.error('Failed to get storage info:', error);
-      return { bytesInUse: 0, quota: 102400 };
+      return { bytesInUse: 0, quota: 10485760 };
     }
   }
 }
